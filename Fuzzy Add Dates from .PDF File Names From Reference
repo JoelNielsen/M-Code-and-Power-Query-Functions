@@ -1,0 +1,15 @@
+let
+    Source = #"PDF QUERY",
+    AddedFromName = Table.AddColumn(Source, "ExportDateFromName",
+        each fnExtractDateFromName([Source.Name]), type nullable date),
+    MergedMeta = Table.NestedJoin(AddedFromName, {"Source.Name"}, FilesMeta, {"Source.Name"}, "Meta", JoinKind.LeftOuter),
+    ExpandedMeta = Table.ExpandTableColumn(MergedMeta, "Meta", {"Date modified"}, {"Date modified"}),
+    AddedExportDate = Table.AddColumn(ExpandedMeta, "ExportDate",
+        each if [ExportDateFromName] <> null
+             then [ExportDateFromName]
+             else DateTime.Date([Date modified]),
+        type date),
+    #"Removed Columns" = Table.RemoveColumns(AddedExportDate,{"ExportDateFromName", "Date modified", "Source.Name"}),
+    #"Changed Type" = Table.TransformColumnTypes(#"Removed Columns",{{"CS", type number}, {"CJ", type number}, {"SU", type number}, {"PU", type number}, {"PS", type number}, {"Year 12", type number}, {"Year 11", type number}, {"Year 10", type number}, {"Year 9", type number}, {"Year 8", type number}, {"Year 7", type number}, {"Year 6", type number}, {"Year 5", type number}, {"Year 4", type number}, {"Year 3", type number}, {"Year 2", type number}, {"Year 1", type number}, {"Total", type number}, {"Spe", type number}, {"Sec", type number}, {"Pri", type number}, {"Prep", type number}, {"Pre", type number}})
+in
+    #"Changed Type"
