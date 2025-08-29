@@ -1,0 +1,8 @@
+=LET(
+  school, $B2,
+  subject, $H2,
+  codes, TOCOL(IFERROR(FILTER(SubjectMap!$B$1:$I$100, SubjectMap!$A$1:$A$100=subject), ""), 1),
+  codesNZ, FILTER(codes, codes<>""), SUMPRODUCT( SUMIFS('BULK BILLING LIST SHEET'!$K$2:$K$5000,
+                     'BULK BILLING LIST SHEET'!$E$2:$E$5000, school,
+                     'BULK BILLING LIST SHEET'!$F$2:$F$5000, codesNZ) )
+)
