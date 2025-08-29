@@ -1,0 +1,6 @@
+let
+    Source = #"FOLDER WITH DOCUMENTS",
+    Keep   = Table.SelectColumns(Source, {"Name", "Date modified"}),
+    Renamed= Table.RenameColumns(Keep, {{"Name", "Source.Name"}})
+in
+    Renamed
