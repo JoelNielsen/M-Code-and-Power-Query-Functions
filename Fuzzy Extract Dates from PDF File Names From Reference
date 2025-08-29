@@ -10,4 +10,4 @@ let
              else DateTime.Date([Date modified]),
         type date)
 in
-    #"AddedExportDate"
+    AddedExportDate
