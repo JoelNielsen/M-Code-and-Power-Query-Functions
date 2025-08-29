@@ -1,0 +1,7 @@
+let
+    Source = SharePoint.Contents("https://example.sharepoint.com/sites/extension_here", [ApiVersion = 15]),
+    #"Shared Documents" = Source{[Name="Shared Documents"]}[Content],
+    FolderName = #"Shared Documents"{[Name="FolderName"]}[Content],
+    #"SubFolderName" = FolderName{[Name="SubFolderName"]}[Content]
+in
+    #"SubFolderName"
