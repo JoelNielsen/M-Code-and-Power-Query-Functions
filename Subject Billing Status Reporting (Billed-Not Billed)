@@ -1,0 +1,12 @@
+=IFERROR(
+  IF(
+    COUNTIFS(
+      'Bulk Billing List'!D:D, A2,
+      'Bulk Billing List'!B:B,
+      "*" & XLOOKUP(C2, SubjectMap!A:A, SubjectMap!B:B, "#N/A") & "*"
+    ) > 0,
+    "Billed",
+    "Not Billed"
+  ),
+  "Not Billed"
+)
