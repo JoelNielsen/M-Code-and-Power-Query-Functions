@@ -1,0 +1,60 @@
+let
+    fnExtractDateFromName = (fileName as nullable text) as nullable date =>
+    let
+        // normalize input
+        TextIn = if fileName = null then "" else Text.Upper(fileName),
+        NoExt = if Text.EndsWith(TextIn, ".PDF") then Text.Start(TextIn, Text.Length(TextIn) - 4) else TextIn,
+
+        // month name map
+        MonthMap = {
+            {"SEPTEMBER","09"},{"SEPT","09"},{"SEP","09"},
+            {"JANUARY","01"},{"JAN","01"},
+            {"FEBRUARY","02"},{"FEB","02"},
+            {"MARCH","03"},{"MAR","03"},
+            {"APRIL","04"},{"APR","04"},
+            {"MAY","05"},
+            {"JUNE","06"},{"JUN","06"},
+            {"JULY","07"},{"JUL","07"},
+            {"AUGUST","08"},{"AUG","08"},
+            {"OCTOBER","10"},{"OCT","10"},
+            {"NOVEMBER","11"},{"NOV","11"},
+            {"DECEMBER","12"},{"DEC","12"}
+        },
+
+        // replace month names with numbers
+        Subbed = List.Accumulate(MonthMap, NoExt, (state, m) => Text.Replace(state, m{0}, m{1})),
+
+        // keep only allowed characters
+        Kept = Text.Select(Subbed, {"0","1","2","3","4","5","6","7","8","9","-","_","/"," ", "."}),
+
+        // normalize separators to single dash
+        Norm = List.Accumulate({"_","/"," "}, Kept, (state, ch) => Text.Replace(state, ch, "-")),
+
+        // split into non-empty trimmed parts
+        Parts = List.Select(Text.Split(Norm, "-"), each _ <> ""),
+        Trimmed = List.Transform(Parts, each Text.Trim(_)),
+
+        // parts into numbers
+        Nums = List.Transform(Trimmed, each try Number.FromText(_) otherwise null),
+        CountN = List.Count(Nums),
+        Indices = if CountN >= 3 then {0..(CountN - 3)} else {},
+
+        // helper
+        TryCompose = (y as number, m as number, d as number) => try Date.FromText(Text.From(y) & "-" & Text.PadStart(Text.From(m), 2, "0") & "-" & Text.PadStart(Text.From(d), 2, "0")) otherwise null,
+
+        // scan looking for  y-m-d or d-m-y
+        Candidates = List.Transform(Indices, (i) =>
+            let a = Nums{i}, b = Nums{i+1}, c = Nums{i+2}
+            in
+                if a <> null and b <> null and c <> null then
+                    if a >= 1900 and a <= 2100 and b >= 1 and b <= 12 and c >= 1 and c <= 31 then TryCompose(a,b,c)
+                    else if a >= 1 and a <= 31 and b >= 1 and b <= 12 and c >= 1900 and c <= 2100 then TryCompose(c,b,a)
+                    else null
+                else null
+        ),
+
+        FirstHit = List.First(List.RemoveNulls(Candidates), null)
+    in
+        FirstHit
+in
+    fnExtractDateFromName
