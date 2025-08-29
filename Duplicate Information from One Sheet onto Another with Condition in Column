@@ -1,0 +1,1 @@
+=FILTER('MAIN SHEET'!A:I, 'MAIN SHEET'!A:A="LEFT", "")
