@@ -8,8 +8,6 @@ let
         each if [ExportDateFromName] <> null
              then [ExportDateFromName]
              else DateTime.Date([Date modified]),
-        type date),
-    #"Removed Columns" = Table.RemoveColumns(AddedExportDate,{"ExportDateFromName", "Date modified", "Source.Name"}),
-    #"Changed Type" = Table.TransformColumnTypes(#"Removed Columns",{{"CS", type number}, {"CJ", type number}, {"SU", type number}, {"PU", type number}, {"PS", type number}, {"Year 12", type number}, {"Year 11", type number}, {"Year 10", type number}, {"Year 9", type number}, {"Year 8", type number}, {"Year 7", type number}, {"Year 6", type number}, {"Year 5", type number}, {"Year 4", type number}, {"Year 3", type number}, {"Year 2", type number}, {"Year 1", type number}, {"Total", type number}, {"Spe", type number}, {"Sec", type number}, {"Pri", type number}, {"Prep", type number}, {"Pre", type number}})
+        type date)
 in
-    #"Changed Type"
+    #"AddedExportDate"
