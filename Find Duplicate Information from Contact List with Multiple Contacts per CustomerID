@@ -1,0 +1,14 @@
+let
+    Source = #"Customer List Report",
+    #"Grouped Rows" = Table.Group(Source, {"Cust_Id"}, {{"RowCount", each _, type table [...TABLE COLUMNS...]}}, //Group rows
+    #"Added Custom" = Table.AddColumn(#"Grouped Rows", "Custom", each Table.RowCount([RowCount])), //Add helper column to count how many rows per CustomerID
+    #"Renamed Columns" = Table.RenameColumns(#"Added Custom",{{"Custom", "Total Customer"}}),
+    #"Added Custom1" = Table.AddColumn(#"Renamed Columns", "Custom", each Table.RowCount(Table.SelectRows([RowCount], each [Preferred Correspondence Method] = "Post"))), //Helper column to isolate all correspondence methods labeled "Post"
+    #"Renamed Columns1" = Table.RenameColumns(#"Added Custom1",{{"Custom", "Post Count"}}),
+    #"Added Custom2" = Table.AddColumn(#"Renamed Columns1", "Custom", each [Total Customer] = [Post Count]), //Add another helper column that shows if "Post" is true for all customer contacts for that CustomerID
+    #"Renamed Columns2" = Table.RenameColumns(#"Added Custom2",{{"Custom", "Post Count Equals Customer"}}),
+    #"Filtered Rows" = Table.SelectRows(#"Renamed Columns2", each ([Post Count Equals Parents] = true)), //Only show 'true' in previous helper column
+    #"Expanded RowCount" = Table.ExpandTableColumn(#"Filtered Rows", "RowCount", {"...TABLE COLUMNS..."}), //Expand RowCount column to re-introduce column data from original table
+    #"Removed Duplicates" = Table.Distinct(#"Expanded RowCount", {"Cust_Id"}) //Remove duplicate rows if needed
+in
+    #"Removed Duplicates"
