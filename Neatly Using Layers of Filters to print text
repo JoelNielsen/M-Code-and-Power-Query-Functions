@@ -1,0 +1,7 @@
+=TEXTJOIN(", ", TRUE,
+  FILTER(
+    'Sheet2'!C:C,
+    ('Sheet2'!A:A = A2) *
+    ISNUMBER( IFERROR( SEARCH('Sheet2'!B:B, TRIM(B2) ), "" ) )
+  )
+)
