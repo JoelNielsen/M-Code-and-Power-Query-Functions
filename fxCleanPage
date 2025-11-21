@@ -1,0 +1,9 @@
+(pageTable as table) as table =>
+let
+    Rc = Table.RowCount(pageTable),
+    Safe = if Rc > 4 then pageTable else #table({},{}),
+    RemoveTop = Table.Skip(Safe, 3),
+    RowCount = Table.RowCount(RemoveTop),
+    RemoveBottom = Table.FirstN(RemoveTop, RowCount - 2)
+in
+    RemoveBottom
