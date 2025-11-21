@@ -1,0 +1,101 @@
+let
+    Source = StudentGroups,
+    Grouped = Table.Group(
+        Source,
+        {"StudentGroupID"},
+        {{"Rows", each _, type table}}
+    ),
+    Final =
+        Table.AddColumn(
+            Grouped,
+            "StudentRows",
+            each
+                let
+                    T = [Rows],
+                    // Student Name = first TRUE row in IsStartRaw
+                    StudentName =
+                        let
+                            r = Table.SelectRows(T, each [IsStartRaw] = true)
+                        in
+                            r{0}[Cleaned.Column1],
+
+                    // EQID row = row where Cleaned.Column1 = "EQ ID:"
+                    EQID =
+                        let
+                            r = Table.SelectRows(T, each [Cleaned.Column1] = "EQ ID:")
+                        in
+                            if Table.RowCount(r) > 0 then r{0}[Cleaned.Column2] else null,
+
+                    // Permission header row occurs exactly once
+                    PermHeaderIndex =
+                        let
+                            headerRow = Table.SelectRows(T, each [Cleaned.Column1] = "Permission Type")
+                        in
+                            headerRow{0}[Index],
+
+                    // All rows after permission header until next start
+                    PermRows =
+                        Table.SelectRows(
+                            T,
+                            each [Index] > PermHeaderIndex and [IsStartRaw] = false
+                        ),
+
+                    // Extract final table
+                    Output =
+                        Table.SelectColumns(
+                            Table.TransformColumns(
+                                PermRows,
+                                {
+                                    {"Cleaned.Column1", Text.From, type text},
+                                    {"Cleaned.Column6", Text.From, type text},
+                                    {"Cleaned.Column3", Text.From, type text},
+                                    {"Cleaned.Column4", Text.From, type text}
+                                }
+                            ),
+                            {"Cleaned.Column1", "Cleaned.Column6", "Cleaned.Column3", "Cleaned.Column4"}
+                        ),
+
+                    // Add student-level fields
+                    AddSN = Table.AddColumn(Output, "StudentName", each StudentName),
+                    AddEQ = Table.AddColumn(AddSN, "EQID", each EQID),
+
+                    // Reorder
+                    Reordered =
+                        Table.ReorderColumns(
+                            AddEQ,
+                            {
+                                "StudentName",
+                                "EQID",
+                                "Cleaned.Column1",
+                                "Cleaned.Column6",
+                                "Cleaned.Column3",
+                                "Cleaned.Column4"
+                            }
+                        )
+                in
+                    Reordered
+        ),
+
+    // Expand all the student tables into flat table
+    Expanded = Table.ExpandTableColumn(
+        Final,
+        "StudentRows",
+        {
+            "StudentName",
+            "EQID",
+            "Cleaned.Column1",
+            "Cleaned.Column6",
+            "Cleaned.Column3",
+            "Cleaned.Column4"
+        },
+        {
+            "StudentName",
+            "EQID",
+            "PermissionType",
+            "Comment",
+            "StartDate",
+            "EndDate"
+        }
+    )
+in
+    Expanded
