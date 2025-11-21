@@ -1,0 +1,69 @@
+let
+    Source = Page001,
+
+    // Add an index reference to next row in column
+    AddIndex = Table.AddIndexColumn(Source, "Index", 0, 1, Int64.Type),
+
+    // Read the current and next values from Cleaned.Column1
+    AddLookahead = Table.AddColumn(
+        AddIndex,
+        "NextValue",
+        each try AddIndex[#"Cleaned.Column1"]{[Index] + 1} otherwise null,
+        type text
+    ),
+
+    // Define a safe text extractor (returns "" for nulls)
+    SafeText = (v) => if v = null then "" else Text.Trim(Text.From(v)),
+
+    // Detect start of a student block:
+    // A start occurs when:
+    //   - current row has a non-empty name
+    //   - next row contains "EQ ID:"
+    AddStartFlagRaw = Table.AddColumn(
+        AddLookahead,
+        "IsStartRaw",
+        each 
+            let
+                currentVal = SafeText([#"Cleaned.Column1"]),
+                nextVal = SafeText([NextValue])
+            in
+                (currentVal <> "")
+                    and 
+                Text.StartsWith(Text.Upper(nextVal), "EQ ID"),
+        type any
+    ),
+
+    // Normalise IsStart to strict logicals
+    AddStartFlag = Table.TransformColumns(
+        AddStartFlagRaw,
+        {{"IsStartRaw", each if _ = true then true else false, type logical}}
+    ),
+
+    // Extract the IsStart list to strict booleans
+    StartList = AddStartFlag[IsStartRaw],
+
+    // Build cumulative StudentGroupID
+    GroupSequence = List.Generate(
+        ()=> [i=1, c=0],
+        each [i] < List.Count(StartList),
+        each [
+            i = [i] + 1,
+            // safe boolean check: StartList{[i]} is true/false because of normalisation above
+            c = [c] + (if StartList{[i]} then 1 else 0)
+        ],
+        each [c]
+    ),
+
+    // Attach StudentGroupID back to the table
+    AddGroupID = Table.AddColumn(
+        AddStartFlag,
+        "StudentGroupID",
+        each GroupSequence{[Index]},
+        Int64.Type
+    ),
+    // StudentGroupID to start at 1 instead of 0 for error handling and remove errors in StudentGroupID as if PDF ends in a student name it will error in the bottom row
+    #"Added to Column" = Table.TransformColumns(AddGroupID, {{"StudentGroupID", each _ + 1, type number}}),
+    #"Removed Errors" = Table.RemoveRowsWithErrors(#"Added to Column", {"StudentGroupID"})
+
+in
+    #"Removed Errors"
