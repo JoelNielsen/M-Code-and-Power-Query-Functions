@@ -5,4 +5,4 @@ Excel Online does not currently support Data Models or VBA code, so that is why 
 
 Another limitation of Excel Online is that Pivot Tables referencing multiple tables breaks/does not work; which is why most comparison functions are done on separate sheets to reduce the need for the user to understand what is going on in the background to compare tables.
 
-Please note: The conversion of PDF to excel table is incredibly taxing on most department-issued computers and will run CPU at 100% for many hours until it's converted. Probably don't do that.
+Please note: The conversion of PDF to excel table is incredibly taxing on most department-issued computers and will run CPU at 100% for many hours until it's converted. Probably don't do that. I'm looking for a more elegant way to do this conversion using more folding but condensing the current set of conversions down in a way that is less resource-intensive while retaining the desired output transormation is very complex and requires a ton of research. Might get to it at another stage as the state it exists in now is just as proof of concept.
